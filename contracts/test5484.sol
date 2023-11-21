@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.18;
 
-import "./ERC5484.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
+import './ERC5484.sol';
+import '@openzeppelin/contracts/access/Ownable.sol';
 
 contract test5484 is ERC5484, Ownable {
 

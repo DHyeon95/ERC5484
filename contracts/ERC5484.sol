@@ -16,7 +16,7 @@ abstract contract ERC5484 is ERC721, IERC5484 {
 
     function _checkBurnAuth(uint tokenId, address spender) internal view virtual returns(bool) {
         require(burnAuthState[tokenId] != BurnAuth.Neither, 'Invaild burn state');
-        return spender == _ownerOf(tokenId);
+        require(spender == _ownerOf(tokenId),'Invaild User');
     }
 
     function _safeMint(address to, uint256 tokenId, bytes memory data) internal virtual override {
