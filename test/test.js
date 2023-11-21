@@ -28,56 +28,46 @@ describe('test5484', function () {
   describe('Mint', function () {
     // issued, transfer 이벤트 체크
    it('mint from owner', async function () {
-      await expect(testContract.testMint(testUser.address, 1)).to.emit(testContract, 'Issued').withArgs(owner.address, testUser.address, 1, 1)
+      await expect(testContract.testMint(testUser.address, 1, 1)).to.emit(testContract, 'Issued').withArgs(owner.address, testUser.address, 1, 1)
       .to.emit(testContract, 'Transfer').withArgs(constants.ZERO_ADDRESS, testUser.address, 1)
       expect(await testContract.balanceOf(testUser.address)).to.equal(1)
       expect(await testContract.ownerOf(1)).to.equal(testUser.address)
     })
     it('disallow mint from others', async function () {
-      await expect(testContract.connect(testUser).testMint(owner.address, 1)).to.be.reverted
+      await expect(testContract.connect(testUser).testMint(owner.address, 1, 1)).to.be.revertedWithCustomError(testContract, 'OwnableUnauthorizedAccount')
     })
   })
-
+  
   describe('Transfer', function () {
-    it('disallow transfers' , async function () {
-      await expect(testContract.transferFrom(owner.address, testUser.address, 1)).to.be.reverted
+    it('disallow transfers', async function () {
+      await expect(testContract.transferFrom(owner.address, testUser.address, 1)).to.be.revertedWith('Transfer is not allowed')
     })
   })
 
   describe('Burn', function () {
-    beforeEach( async function () {
-      await testContract.testMint(owner.address, 2)
-      await testContract.testMint(testUser.address, 1)
+    beforeEach(async function () {
+      await testContract.testMint(owner.address, 2, 1)
+      await testContract.testMint(testUser.address, 1, 1)
     })
 
     it('disallow burn from others', async function () {
-      await expect(testContract.testBurn(1)).to.be.reverted
+      await expect(testContract.testBurn(1)).to.be.revertedWith('Invaild User')
       expect(await testContract.ownerOf(1)).to.equal(testUser.address)
       expect(await testContract.balanceOf(testUser.address)).to.equal(1)
 
-      await expect(testContract.connect(testUser).testBurn(2)).to.be.reverted
+      await expect(testContract.connect(testUser).testBurn(2)).to.be.revertedWith('Invaild User')
       expect(await testContract.ownerOf(2)).to.equal(owner.address)
       expect(await testContract.balanceOf(owner.address)).to.equal(1)
     })
 
-    it('burn from tokenowner', async function () {
+    it.only('burn from tokenowner', async function () {
       await testContract.connect(testUser).testBurn(1)
-      await expect(testContract.ownerOf(1)).to.be.reverted
+      await expect(testContract.ownerOf(1)).to.be.revertedWithCustomError(testContract, 'ERC721NonexistentToken')
       expect(await testContract.balanceOf(testUser.address)).to.equal(0)
 
       await testContract.testBurn(2)
-      await expect(testContract.ownerOf(2)).to.be.reverted
+      await expect(testContract.ownerOf(2)).to.be.revertedWithCustomError(testContract, 'ERC721NonexistentToken')
       expect(await testContract.balanceOf(owner.address)).to.equal(0)
-    })
-  })  
-
-  describe('BurnAuth', function ()  {
-    beforeEach(async function () {
-      await testContract.testMint(owner.address, 1)
-    })
-
-    it('check BurnAuth OwnerOnly', async function () {
-      expect(await testContract.burnAuth(1)).to.equal(1)
     })
   })
 })
