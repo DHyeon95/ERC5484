@@ -1,32 +1,37 @@
 // SPDX-License-Identifier: GPL-3.0
-pragma solidity ^0.8.18;
+pragma solidity ^0.8.20;
 
-import '@openzeppelin/contracts/token/ERC721/ERC721.sol';
-import 'contracts/IERC5484.sol';
+import './ERC721/ERC721.sol';
+import './IERC5484.sol';
 
+// OpenZeppelin Contracts (v5.0.0)
 // OwnerOnly : 소각권리가 Owner 있는것 가정.
 
 abstract contract ERC5484 is ERC721, IERC5484 {
 
-    mapping(uint => BurnAuth) private burnAuthState;
+    mapping(uint256 => BurnAuth) private burnAuthState;
 
-    function _safeTransfer(address from, address to, uint256 tokenId, bytes memory data) internal override {
-        revert('Transfer is not allowed');
-    }
-
-    function _checkBurnAuth(uint tokenId, address spender) internal view virtual returns(bool) {
+    /// @notice check burn authorization of the token id
+    /// @dev BurnAuth invalid, reverted
+    /// @param tokenId The ID of the token
+    /// @param spender _msgSender()
+    modifier _checkBurnAuth(uint tokenId, address spender) virtual {
         require(burnAuthState[tokenId] != BurnAuth.Neither, 'Invaild burn state');
-        require(spender == _ownerOf(tokenId),'Invaild User');
+        require(spender == _ownerOf(tokenId), 'Invaild User');
+        _;
     }
 
-    function _safeMint(address to, uint256 tokenId, bytes memory data) internal virtual override {
-        _mint(to, tokenId);
-        burnAuthState[tokenId] = BurnAuth.OwnerOnly;
-        emit Issued(msg.sender, to, tokenId, BurnAuth.OwnerOnly);
+    /// @notice Issued token
+    /// @dev Mints using the _safeMint embedded in 721, sets burnAuth. Emits the Issued event.
+    /// @param to The receiver
+    /// @param tokenId The ID of the token
+    function _mintSBT(address to, uint256 tokenId, BurnAuth state) internal virtual {
+        _safeMint(to, tokenId, '');
+        burnAuthState[tokenId] = state ;
+        emit Issued(msg.sender, to, tokenId, state);
     }
 
-    function _burnSbt(uint tokenId) internal virtual {
-        _checkBurnAuth(tokenId , _msgSender());
+    function _burnSBT(uint tokenId) internal virtual _checkBurnAuth(tokenId, _msgSender()) {
         _burn(tokenId);
     }
 
@@ -35,11 +40,12 @@ abstract contract ERC5484 is ERC721, IERC5484 {
             super.supportsInterface(interfaceId);
     }
 
-    function burnAuth(uint tokenId) public view override returns (BurnAuth) {
+    function burnAuth(uint256 tokenId) public view override returns (BurnAuth) {
+        _requireOwned(tokenId);
         return burnAuthState[tokenId];
     }
 
-    function transferFrom(address from , address to , uint256 tokenId) public override {
+    function transferFrom(address, address, uint256) public override {
         revert('Transfer is not allowed');
     }
 }
