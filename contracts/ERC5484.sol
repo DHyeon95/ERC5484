@@ -18,7 +18,7 @@ abstract contract ERC5484 is ERC721, IERC5484 {
         return burnAuthState[tokenId];
     }
 
-    /// @notice transferFrom
+    /// @notice TransferFrom
     /// @dev Overrides function to disallow transfers.
     function transferFrom(address, address, uint256) public pure override {
         revert("Transfer is not allowed");
@@ -33,8 +33,8 @@ abstract contract ERC5484 is ERC721, IERC5484 {
     }
 
 
-    /// @notice check burn authorization of the token
-    /// @dev when burnAuthState invalid, reverted
+    /// @notice Check burn authorization of the token
+    /// @dev When burnAuthState invalid, reverted
     /// @param tokenId The ID of the token
     /// @param spender _msgSender()
     modifier _checkBurnAuth(uint tokenId, address spender) virtual {
