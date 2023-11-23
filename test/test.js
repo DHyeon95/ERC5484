@@ -60,7 +60,7 @@ describe('test5484', function () {
       expect(await testContract.balanceOf(owner.address)).to.equal(1)
     })
 
-    it.only('burn from tokenowner', async function () {
+    it('burn from tokenowner', async function () {
       await testContract.connect(testUser).testBurn(1)
       await expect(testContract.ownerOf(1)).to.be.revertedWithCustomError(testContract, 'ERC721NonexistentToken')
       expect(await testContract.balanceOf(testUser.address)).to.equal(0)
